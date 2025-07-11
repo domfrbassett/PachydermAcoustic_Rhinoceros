@@ -1,9 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-	  <TargetFrameworks>net7.0-windows</TargetFrameworks>
-	  <OutputType>Library</OutputType>
-	  <AssemblyName>Pachyderm_Acoustic</AssemblyName>
-	  <IsWebBootstrapper>false</IsWebBootstrapper>
+	<TargetFrameworks>net48;net7.0</TargetFrameworks>
+	<OutputType>Library</OutputType>
+	<IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -19,10 +18,8 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-	  <!--UseWpf>true</UseWpf>
-	  <UseWindowsForms>true</UseWindowsForms>-->
-	  <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
-	  <!--ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>-->
+	<!--UseWpf>true</UseWpf>-->
+	<ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <WarningLevel>0</WarningLevel>
@@ -53,15 +50,13 @@
     <Reference Include="CLF_Read">
       <HintPath>..\PachydermAcoustic_Universal\Pachyderm_Acoustic_Universal\Resources\CLF_Read.dll</HintPath>
     </Reference>
-	  <Reference Include="Eto">
+	  <Reference Include="Eto, Version=2.7.0.0, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
 		  <SpecificVersion>False</SpecificVersion>
 		  <HintPath>C:\Program Files\Rhino 8\System\Eto.dll</HintPath>
-		  <Private>false</Private>
 	  </Reference>
 	  <Reference Include="Eto.Wpf">
 		  <SpecificVersion>false</SpecificVersion>
 		  <HintPath>C:\Program Files\Rhino 8\System\Eto.Wpf.dll</HintPath>
-		  <Private>false</Private>
 	  </Reference>
     <Reference Include="Rhino.UI">
       <HintPath>C:\Program Files\Rhino 8\System\Rhino.UI.dll</HintPath>
@@ -129,35 +124,11 @@
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
   </ItemGroup>
-  <PropertyGroup>
-	  <!-->PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).rhp"
-Copy "$(ProjectDir)Resources\libfftw3-3.dll" "$(TargetDir)"</PostBuildEvent>-->
-	  <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-  </PropertyGroup>
-	<Target Name="MakeRHP" AfterTargets="Build">
-		<!-- Helpful debug output -->
-		<Message Text="=== MakeRHP is running ===" Importance="high" />
-		<Message Text="TargetFramework: $(TargetFramework)" Importance="high" />
-		<Message Text="TargetPath: $(TargetPath)" Importance="high" />
-		<Message Text="TargetDir: $(TargetDir)" Importance="high" />
-		<Message Text="ProjectName: $(AssemblyName)" Importance="high" />
-
-		<!-- Copy DLL to .rhp -->
-		<Copy
-		  SourceFiles="$(TargetPath)"
-		  DestinationFiles="$(TargetDir)$(AssemblyName).rhp"
-		  Condition="Exists('$(TargetPath)')" />
-
-		<!-- Copy .rhp to Rhino plug-ins folder -->
-		<Copy
-		  SourceFiles="$(TargetDir)$(AssemblyName).rhp"
-		  DestinationFolder="C:\Users\domin\AppData\Roaming\McNeel\Rhinoceros\8.0\Plug-ins\Pachyderm_Write_Folder\"
-		  Condition="Exists('$(TargetDir)$(AssemblyName).rhp')" />
-
-		<!-- Copy extra native DLL if needed -->
-		<Copy
-		  SourceFiles="$(ProjectDir)Resources\libfftw3-3.dll"
-		  DestinationFolder="C:\Users\domin\AppData\Roaming\McNeel\Rhinoceros\8.0\Plug-ins\Pachyderm_Write_Folder\"
-		  Condition="Exists('$(ProjectDir)Resources\libfftw3-3.dll')" />
-	</Target>
+	<PropertyGroup>
+		<PostBuildEvent>
+			Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).rhp"
+			Copy "$(ProjectDir)Resources\libfftw3-3.dll" "$(TargetDir)"
+		</PostBuildEvent>
+		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+	</PropertyGroup>
 </Project>
