@@ -4512,9 +4512,43 @@ namespace Pachyderm_Acoustic
 
             private void DistributionType_SelectedIndexChanged(object sender, EventArgs e)
             {
+                string selectedDistribution = DistributionType.SelectedValue.ToString();
+
+                if (selectedDistribution == "Binaural (select file...)")
+                {
+                    HrtfCompensationOptions seed = new HrtfCompensationOptions();
+
+                    if (_sysCompSettingsPrimitives != null)
+                    {
+                        seed.SelectedEQ = (RhinoSystemCompSettings.EQType)_sysCompSettingsPrimitives.SelectedEQ;
+                        seed.SmoothingOct = _sysCompSettingsPrimitives.SmoothingOct;
+                        seed.MaxBoostDb = _sysCompSettingsPrimitives.MaxBoostDb;
+                        seed.LowFreqHz = _sysCompSettingsPrimitives.LowFreqHz;
+                        seed.MinPhase = _sysCompSettingsPrimitives.MinPhase;
+                        seed.IsCalibrated = _sysCompSettingsPrimitives.IsCalibrated;
+                        seed.FreeFieldIncidence = _sysCompSettingsPrimitives.FreeFieldIncidence;
+                    }
+
+                    string initialPath = null;
+                    var dlg = new Pachyderm_Acoustic.UI.PachHrtfDialog(initialPath, seed);
+                    bool ok = dlg.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow);
+                    if (!ok || dlg.ResultData == null)
+                    {
+                        if (Channel_View.Items.Count == 0)
+                        {
+                            DistributionType.SelectedIndex = 0;
+                        }
+
+                        return;
+                    }
+
+                    hrtf = dlg.ResultData.Hrtf;
+                    _sysCompSettingsPrimitives = dlg.ResultData.CompensationPrimitives;
+                }
+
                 Channel_View.Items.Clear();
                 disable_CEdit();
-                switch (DistributionType.SelectedValue.ToString())
+                switch (selectedDistribution)
                 {
                     case "Monaural":
                         Channel_View.Items.Add(channel.Monaural(0));
@@ -4524,28 +4558,6 @@ namespace Pachyderm_Acoustic
                         Channel_View.Items.Add(channel.Right(1));
                         break;
                     case "Binaural (select file...)":
-                        HrtfCompensationOptions seed = new HrtfCompensationOptions();
-
-                        if (_sysCompSettingsPrimitives != null)
-                        {
-                            seed.SelectedEQ = (RhinoSystemCompSettings.EQType)_sysCompSettingsPrimitives.SelectedEQ;
-                            seed.SmoothingOct = _sysCompSettingsPrimitives.SmoothingOct;
-                            seed.MaxBoostDb = _sysCompSettingsPrimitives.MaxBoostDb;
-                            seed.LowFreqHz = _sysCompSettingsPrimitives.LowFreqHz;
-                            seed.MinPhase = _sysCompSettingsPrimitives.MinPhase;
-                            seed.IsCalibrated = _sysCompSettingsPrimitives.IsCalibrated;
-                            seed.FreeFieldIncidence = _sysCompSettingsPrimitives.FreeFieldIncidence;
-                        }
-
-                        string initialPath = null;
-                        var dlg = new Pachyderm_Acoustic.UI.PachHrtfDialog(initialPath, seed);
-                        bool ok = dlg.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow);
-                        if (!ok || dlg.ResultData == null) return;
-
-                        hrtf = dlg.ResultData.Hrtf;
-                        _sysCompSettingsPrimitives = dlg.ResultData.CompensationPrimitives;
-
-                        Channel_View.Items.Clear();
                         Channel_View.Items.Add(new channel(0, new Hare.Geometry.Vector(0, 0, 0), channel.channel_type.hrtf, 0));
                         break;
                     case "A-Format (type I-A)":
@@ -4567,8 +4579,10 @@ namespace Pachyderm_Acoustic
                         ReadArray();
                         break;
                 }
+                Clear_Render();
                 Draw_Feedback();
                 Update_Graph(sender, e);
+                Update_OrientationDependentParameters();
             }
 
             private void Graph_Octave_SelectedIndexChanged(object sender, EventArgs e)
