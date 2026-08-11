@@ -183,6 +183,8 @@ namespace Pachyderm_Acoustic
 
                     AddEllipse(lines, left, front, up, r * 0.08, r * 0.16, 12);
                     AddEllipse(lines, rightEar, front, up, r * 0.08, r * 0.16, 12);
+                    AddPinna(lines, left, front, up);
+                    AddPinna(lines, rightEar, front, up);
 
                     return lines;
                 }
@@ -219,6 +221,56 @@ namespace Pachyderm_Acoustic
                     {
                         double a = 2.0 * Math.PI * i / segments;
                         Point3d next = center + axisA * (Math.Cos(a) * radiusA) + axisB * (Math.Sin(a) * radiusB);
+                        lines.Add(new Line(last, next));
+                        last = next;
+                    }
+                }
+
+                private void AddPinna(List<Line> lines, Point3d center, Vector3d front, Vector3d up)
+                {
+                    Vector3d f = front;
+                    Vector3d u = up;
+                    f.Unitize();
+                    u.Unitize();
+
+                    AddCubic(
+                        lines,
+                        center + f * r * -0.030 + u * r * 0.120,
+                        center + f * r * 0.050 + u * r * 0.105,
+                        center + f * r * 0.060 + u * r * -0.090,
+                        center + f * r * -0.020 + u * r * -0.125,
+                        8);
+
+                    AddEllipse(lines, center + f * r * 0.012 + u * r * -0.010, f, u, r * 0.030, r * 0.060, 10);
+
+                    AddCubic(
+                        lines,
+                        center + f * r * -0.018 + u * r * 0.070,
+                        center + f * r * 0.018 + u * r * 0.045,
+                        center + f * r * 0.018 + u * r * -0.020,
+                        center + f * r * -0.012 + u * r * -0.060,
+                        7);
+
+                    AddCubic(
+                        lines,
+                        center + f * r * -0.010 + u * r * 0.015,
+                        center + f * r * -0.050 + u * r * 0.005,
+                        center + f * r * -0.050 + u * r * -0.060,
+                        center + f * r * -0.012 + u * r * -0.090,
+                        6);
+                }
+
+                private static void AddCubic(List<Line> lines, Point3d p0, Point3d p1, Point3d p2, Point3d p3, int segments)
+                {
+                    Point3d last = p0;
+                    for (int i = 1; i <= segments; i++)
+                    {
+                        double t = (double)i / segments;
+                        double u = 1.0 - t;
+                        Point3d next = new Point3d(
+                            u * u * u * p0.X + 3.0 * u * u * t * p1.X + 3.0 * u * t * t * p2.X + t * t * t * p3.X,
+                            u * u * u * p0.Y + 3.0 * u * u * t * p1.Y + 3.0 * u * t * t * p2.Y + t * t * t * p3.Y,
+                            u * u * u * p0.Z + 3.0 * u * u * t * p1.Z + 3.0 * u * t * t * p2.Z + t * t * t * p3.Z);
                         lines.Add(new Line(last, next));
                         last = next;
                     }
