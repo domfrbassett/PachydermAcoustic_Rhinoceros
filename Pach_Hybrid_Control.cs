@@ -1855,6 +1855,22 @@ namespace Pachyderm_Acoustic
                 Update_Parameters();
             }
 
+            private bool SelectedParameterUsesReceiverOrientation()
+            {
+                if (Parameter_Choice == null || Parameter_Choice.SelectedValue == null) return false;
+
+                string parameter = Parameter_Choice.SelectedValue.ToString();
+                return parameter == "Lateral Fraction (LF)"
+                    || parameter == "Lateral Efficiency (LE)"
+                    || parameter == "Interaural Cross-Correlation (Early)"
+                    || parameter == "Interaural Cross-Correlation (Late)";
+            }
+
+            private void Update_OrientationDependentParameters()
+            {
+                if (SelectedParameterUsesReceiverOrientation()) Update_Parameters();
+            }
+
             private void Update_Parameters()
             {
                 if (Direct_Data == null && IS_Data == null && Receiver == null || Receiver_Choice.SelectedIndex < 0) { return; }
@@ -3160,18 +3176,20 @@ namespace Pachyderm_Acoustic
 
             private void Alt_Choice_ValueChanged(object sender, EventArgs e)
             {
-                if (Alt_Choice.Value == 91) Alt_Choice.Value = -90;
-                else if (Alt_Choice.Value == -91) Alt_Choice.Value = 90;
+                if (Alt_Choice.Value == 91) { Alt_Choice.Value = -90; return; }
+                else if (Alt_Choice.Value == -91) { Alt_Choice.Value = 90; return; }
 
                 Update_Graph(sender, e);
+                Update_OrientationDependentParameters();
             }
 
             private void Azi_Choice_ValueChanged(object sender, EventArgs e)
             {
-                if (Azi_Choice.Value == 360) Azi_Choice.Value = 0;
-                else if (Azi_Choice.Value == -1) Azi_Choice.Value = 359;
+                if (Azi_Choice.Value == 360) { Azi_Choice.Value = 0; return; }
+                else if (Azi_Choice.Value == -1) { Azi_Choice.Value = 359; return; }
 
                 Update_Graph(sender, e);
+                Update_OrientationDependentParameters();
             }
             #endregion
 
