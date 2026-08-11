@@ -30,7 +30,7 @@ namespace Pachyderm_Acoustic
         /// </summary>
         public class AuralisationConduit : Rhino.Display.DisplayConduit
         {
-            private readonly DummyHeadGlyph Head = new DummyHeadGlyph(0.18);
+            private readonly DummyHeadGlyph Head = new DummyHeadGlyph(0.105);
 
             public AuralisationConduit()
             {
@@ -164,7 +164,6 @@ namespace Pachyderm_Acoustic
                     MakeFrame(front, out right, out up);
 
                     foreach (Line l in HeadOutline(origin, front, right, up)) display.DrawLine(l, body, 2);
-                    foreach (Line l in HeadProfile(origin, front, right, up)) display.DrawLine(l, body, 2);
                     foreach (Line l in EarLines(origin, front, right, up)) display.DrawLine(l, ears, 2);
                     foreach (Line l in FrontMarker(origin, front, right, up)) display.DrawLine(l, face, 3);
                 }
@@ -172,37 +171,18 @@ namespace Pachyderm_Acoustic
                 private List<Line> HeadOutline(Point3d origin, Vector3d front, Vector3d right, Vector3d up)
                 {
                     List<Line> lines = new List<Line>();
-                    AddEllipse(lines, origin + up * r * 0.22, front, right, up, r * 0.48, r * 0.66, 32);
-                    return lines;
-                }
-
-                private List<Line> HeadProfile(Point3d origin, Vector3d front, Vector3d right, Vector3d up)
-                {
-                    List<Line> lines = new List<Line>();
-
-                    AddArc(lines, origin + up * r * 0.24, front, up, r * 0.34, r * 0.58, -0.65 * Math.PI, 0.65 * Math.PI, 20);
-                    AddArc(lines, origin + up * r * 0.24, front, up, -r * 0.34, r * 0.58, -0.65 * Math.PI, 0.65 * Math.PI, 20);
-
-                    Point3d neckL = Local(origin, front, right, up, -r * 0.10, r * 0.18, -r * 0.42);
-                    Point3d neckR = Local(origin, front, right, up, -r * 0.10, -r * 0.18, -r * 0.42);
-                    Point3d shoulderL = Local(origin, front, right, up, -r * 0.18, r * 0.55, -r * 0.82);
-                    Point3d shoulderR = Local(origin, front, right, up, -r * 0.18, -r * 0.55, -r * 0.82);
-
-                    lines.Add(new Line(neckL, shoulderL));
-                    lines.Add(new Line(neckR, shoulderR));
-                    lines.Add(new Line(shoulderL, shoulderR));
-
+                    AddEllipse(lines, origin + up * r * 0.15, right, up, r * 0.42, r * 0.55, 28);
                     return lines;
                 }
 
                 private List<Line> EarLines(Point3d origin, Vector3d front, Vector3d right, Vector3d up)
                 {
                     List<Line> lines = new List<Line>();
-                    Point3d left = origin - right * r * 0.55 + up * r * 0.22;
-                    Point3d rightEar = origin + right * r * 0.55 + up * r * 0.22;
+                    Point3d left = origin - right * r * 0.47 + up * r * 0.15;
+                    Point3d rightEar = origin + right * r * 0.47 + up * r * 0.15;
 
-                    AddEllipse(lines, left, right, front, up, r * 0.11, r * 0.20, 14);
-                    AddEllipse(lines, rightEar, right, front, up, r * 0.11, r * 0.20, 14);
+                    AddEllipse(lines, left, front, up, r * 0.08, r * 0.16, 12);
+                    AddEllipse(lines, rightEar, front, up, r * 0.08, r * 0.16, 12);
 
                     return lines;
                 }
@@ -210,11 +190,11 @@ namespace Pachyderm_Acoustic
                 private List<Line> FrontMarker(Point3d origin, Vector3d front, Vector3d right, Vector3d up)
                 {
                     List<Line> lines = new List<Line>();
-                    Point3d noseBase = origin + up * r * 0.22;
-                    Point3d noseTip = noseBase + front * r * 0.70;
+                    Point3d noseBase = origin + up * r * 0.15;
+                    Point3d noseTip = noseBase + front * r * 0.58;
                     lines.Add(new Line(noseBase, noseTip));
-                    lines.Add(new Line(noseTip, noseTip - front * r * 0.18 + right * r * 0.11));
-                    lines.Add(new Line(noseTip, noseTip - front * r * 0.18 - right * r * 0.11));
+                    lines.Add(new Line(noseTip, noseTip - front * r * 0.14 + right * r * 0.08));
+                    lines.Add(new Line(noseTip, noseTip - front * r * 0.14 - right * r * 0.08));
                     return lines;
                 }
 
@@ -229,7 +209,7 @@ namespace Pachyderm_Acoustic
                     if (!up.Unitize()) up = Vector3d.ZAxis;
                 }
 
-                private static void AddEllipse(List<Line> lines, Point3d center, Vector3d normal, Vector3d axisA, Vector3d axisB, double radiusA, double radiusB, int segments)
+                private static void AddEllipse(List<Line> lines, Point3d center, Vector3d axisA, Vector3d axisB, double radiusA, double radiusB, int segments)
                 {
                     axisA.Unitize();
                     axisB.Unitize();
@@ -244,26 +224,6 @@ namespace Pachyderm_Acoustic
                     }
                 }
 
-                private static void AddArc(List<Line> lines, Point3d center, Vector3d axisA, Vector3d axisB, double radiusA, double radiusB, double start, double end, int segments)
-                {
-                    axisA.Unitize();
-                    axisB.Unitize();
-
-                    Point3d last = center + axisA * (Math.Cos(start) * radiusA) + axisB * (Math.Sin(start) * radiusB);
-                    for (int i = 1; i <= segments; i++)
-                    {
-                        double t = (double)i / segments;
-                        double a = start + (end - start) * t;
-                        Point3d next = center + axisA * (Math.Cos(a) * radiusA) + axisB * (Math.Sin(a) * radiusB);
-                        lines.Add(new Line(last, next));
-                        last = next;
-                    }
-                }
-
-                private static Point3d Local(Point3d origin, Vector3d front, Vector3d right, Vector3d up, double x, double y, double z)
-                {
-                    return origin + front * x + right * y + up * z;
-                }
             }
         }
     }
