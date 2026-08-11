@@ -88,6 +88,8 @@ namespace Pachyderm_Acoustic
             private List<System.Guid> m_id_list = new List<System.Guid>();
             private readonly MicrophoneGlyph Mic = new MicrophoneGlyph(0.1);
             private Rhino.Geometry.Line Dir;
+            private bool m_binauralPreview;
+            private Rhino.Geometry.Point3d m_binauralPreviewReceiver;
             public ReceiverConduit()
             : base()
             {
@@ -255,15 +257,29 @@ namespace Pachyderm_Acoustic
                     Color collar = Color.Black;
                     Color waves = selected ? Color.OrangeRed : Color.Red;
 
-                    foreach (Line l in Mic.GetBodyLines(pt)) e.Display.DrawLine(l, body, 2);
-                    foreach (Circle c in Mic.GetBodyRings(pt)) e.Display.DrawCircle(c, body, 2);
-                    foreach (Circle c in Mic.GetCollarRings(pt)) e.Display.DrawCircle(c, collar, 3);
-                    foreach (Line l in Mic.GetCable(pt)) e.Display.DrawLine(l, cable, 2);
-                    foreach (Line l in Mic.GetIncomingWaveStar(pt)) e.Display.DrawLine(l, waves, 2);
+                    if (!IsBinauralPreviewReceiver(pt))
+                    {
+                        foreach (Line l in Mic.GetBodyLines(pt)) e.Display.DrawLine(l, body, 2);
+                        foreach (Circle c in Mic.GetBodyRings(pt)) e.Display.DrawCircle(c, body, 2);
+                        foreach (Circle c in Mic.GetCollarRings(pt)) e.Display.DrawCircle(c, collar, 3);
+                        foreach (Line l in Mic.GetCable(pt)) e.Display.DrawLine(l, cable, 2);
+                        foreach (Line l in Mic.GetIncomingWaveStar(pt)) e.Display.DrawLine(l, waves, 2);
+                    }
 
                     e.Display.Draw2dText(index.ToString(), text, new Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 18, "Arial");
                     index++;
                 }
+            }
+
+            private bool IsBinauralPreviewReceiver(Point3d pt)
+            {
+                return m_binauralPreview && pt.DistanceTo(m_binauralPreviewReceiver) < 0.001;
+            }
+
+            public void SetBinauralPreviewReceiver(Point3d pt, bool enabled)
+            {
+                m_binauralPreview = enabled;
+                m_binauralPreviewReceiver = pt;
             }
 
             public void set_direction(Rhino.Geometry.Point3d rec, Rhino.Geometry.Point3d dir)

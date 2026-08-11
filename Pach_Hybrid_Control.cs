@@ -3445,6 +3445,8 @@ namespace Pachyderm_Acoustic
                     Point3d receiverPoint = Utilities.RCPachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]);
                     bool binaural = DistributionType.SelectedValue.ToString() == "Binaural (select file...)";
 
+                    if (ReceiverConduit.Instance != null) ReceiverConduit.Instance.SetBinauralPreviewReceiver(receiverPoint, binaural);
+
                     if (binaural)
                     {
                         AuralisationConduit.Instance.set_binaural_head(receiverPoint, Utilities.RCPachTools.HPttoRPt(listenerDirection));
