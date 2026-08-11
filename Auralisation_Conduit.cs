@@ -163,40 +163,110 @@ namespace Pachyderm_Acoustic
                     Vector3d up;
                     MakeFrame(front, out right, out up);
 
-                    foreach (Line l in HeadOutline(origin, front, right, up)) display.DrawLine(l, body, 2);
+                    foreach (Line l in HeadForm(origin, front, right, up)) display.DrawLine(l, body, 2);
                     foreach (Line l in EarLines(origin, front, right, up)) display.DrawLine(l, ears, 2);
-                    foreach (Line l in FrontMarker(origin, front, right, up)) display.DrawLine(l, face, 3);
+                    foreach (Line l in FaceLines(origin, front, right, up)) display.DrawLine(l, face, 2);
                 }
 
-                private List<Line> HeadOutline(Point3d origin, Vector3d front, Vector3d right, Vector3d up)
+                private List<Line> HeadForm(Point3d origin, Vector3d front, Vector3d right, Vector3d up)
                 {
                     List<Line> lines = new List<Line>();
-                    AddEllipse(lines, origin + up * r * 0.15, right, up, r * 0.42, r * 0.55, 28);
+                    Point3d skull = origin + up * r * 0.13;
+                    AddEllipse(lines, skull, right, up, r * 0.42, r * 0.56, 30);
+                    AddEllipse(lines, skull - front * r * 0.02, front, up, r * 0.34, r * 0.56, 30);
+                    AddEllipse(lines, origin + up * r * 0.08, front, right, r * 0.34, r * 0.42, 28);
+
+                    AddCubic(
+                        lines,
+                        origin + front * r * 0.26 + up * r * -0.34,
+                        origin + front * r * 0.12 + up * r * -0.54,
+                        origin + front * r * -0.22 + up * r * -0.60,
+                        origin + front * r * -0.28 + up * r * -0.30,
+                        14);
+
+                    AddCubic(
+                        lines,
+                        origin + front * r * 0.05 + right * r * 0.27 + up * r * -0.42,
+                        origin + front * r * -0.04 + right * r * 0.33 + up * r * -0.56,
+                        origin + front * r * -0.24 + right * r * 0.22 + up * r * -0.70,
+                        origin + front * r * -0.30 + right * r * 0.08 + up * r * -0.78,
+                        10);
+
+                    AddCubic(
+                        lines,
+                        origin + front * r * 0.05 + right * r * -0.27 + up * r * -0.42,
+                        origin + front * r * -0.04 + right * r * -0.33 + up * r * -0.56,
+                        origin + front * r * -0.24 + right * r * -0.22 + up * r * -0.70,
+                        origin + front * r * -0.30 + right * r * -0.08 + up * r * -0.78,
+                        10);
+
                     return lines;
                 }
 
                 private List<Line> EarLines(Point3d origin, Vector3d front, Vector3d right, Vector3d up)
                 {
                     List<Line> lines = new List<Line>();
-                    Point3d left = origin - right * r * 0.47 + up * r * 0.15;
-                    Point3d rightEar = origin + right * r * 0.47 + up * r * 0.15;
+                    Point3d left = origin - right * r * 0.46 + up * r * 0.12;
+                    Point3d rightEar = origin + right * r * 0.46 + up * r * 0.12;
 
-                    AddEllipse(lines, left, front, up, r * 0.08, r * 0.16, 12);
-                    AddEllipse(lines, rightEar, front, up, r * 0.08, r * 0.16, 12);
-                    AddPinna(lines, left, front, up);
-                    AddPinna(lines, rightEar, front, up);
+                    AddPinna(lines, left, front, -right, up);
+                    AddPinna(lines, rightEar, front, right, up);
 
                     return lines;
                 }
 
-                private List<Line> FrontMarker(Point3d origin, Vector3d front, Vector3d right, Vector3d up)
+                private List<Line> FaceLines(Point3d origin, Vector3d front, Vector3d right, Vector3d up)
                 {
                     List<Line> lines = new List<Line>();
-                    Point3d noseBase = origin + up * r * 0.15;
-                    Point3d noseTip = noseBase + front * r * 0.58;
-                    lines.Add(new Line(noseBase, noseTip));
-                    lines.Add(new Line(noseTip, noseTip - front * r * 0.14 + right * r * 0.08));
-                    lines.Add(new Line(noseTip, noseTip - front * r * 0.14 - right * r * 0.08));
+
+                    AddCubic(
+                        lines,
+                        origin + front * r * 0.18 + up * r * 0.43,
+                        origin + front * r * 0.34 + up * r * 0.34,
+                        origin + front * r * 0.46 + up * r * 0.25,
+                        origin + front * r * 0.53 + up * r * 0.13,
+                        10);
+
+                    AddCubic(
+                        lines,
+                        origin + front * r * 0.53 + up * r * 0.13,
+                        origin + front * r * 0.42 + up * r * 0.07,
+                        origin + front * r * 0.36 + up * r * 0.02,
+                        origin + front * r * 0.38 + up * r * -0.04,
+                        8);
+
+                    AddCubic(
+                        lines,
+                        origin + front * r * 0.36 + up * r * -0.13,
+                        origin + front * r * 0.28 + up * r * -0.18,
+                        origin + front * r * 0.25 + up * r * -0.25,
+                        origin + front * r * 0.29 + up * r * -0.34,
+                        8);
+
+                    AddCubic(
+                        lines,
+                        origin + front * r * 0.26 + right * r * -0.20 + up * r * 0.20,
+                        origin + front * r * 0.32 + right * r * -0.11 + up * r * 0.24,
+                        origin + front * r * 0.32 + right * r * -0.03 + up * r * 0.23,
+                        origin + front * r * 0.27 + right * r * 0.00 + up * r * 0.19,
+                        7);
+
+                    AddCubic(
+                        lines,
+                        origin + front * r * 0.26 + right * r * 0.20 + up * r * 0.20,
+                        origin + front * r * 0.32 + right * r * 0.11 + up * r * 0.24,
+                        origin + front * r * 0.32 + right * r * 0.03 + up * r * 0.23,
+                        origin + front * r * 0.27 + right * r * 0.00 + up * r * 0.19,
+                        7);
+
+                    AddCubic(
+                        lines,
+                        origin + front * r * 0.28 + right * r * -0.16 + up * r * -0.08,
+                        origin + front * r * 0.33 + right * r * -0.06 + up * r * -0.11,
+                        origin + front * r * 0.33 + right * r * 0.06 + up * r * -0.11,
+                        origin + front * r * 0.28 + right * r * 0.16 + up * r * -0.08,
+                        8);
+
                     return lines;
                 }
 
@@ -226,38 +296,69 @@ namespace Pachyderm_Acoustic
                     }
                 }
 
-                private void AddPinna(List<Line> lines, Point3d center, Vector3d front, Vector3d up)
+                private void AddPinna(List<Line> lines, Point3d center, Vector3d front, Vector3d lateral, Vector3d up)
                 {
                     Vector3d f = front;
+                    Vector3d s = lateral;
                     Vector3d u = up;
                     f.Unitize();
+                    s.Unitize();
                     u.Unitize();
 
+                    AddEllipse(lines, center - s * r * 0.020, f, u, r * 0.070, r * 0.170, 14);
+
                     AddCubic(
                         lines,
-                        center + f * r * -0.030 + u * r * 0.120,
-                        center + f * r * 0.050 + u * r * 0.105,
-                        center + f * r * 0.060 + u * r * -0.090,
-                        center + f * r * -0.020 + u * r * -0.125,
+                        center + f * r * -0.052 + s * r * 0.020 + u * r * 0.165,
+                        center + f * r * 0.088 + s * r * 0.072 + u * r * 0.178,
+                        center + f * r * 0.128 + s * r * 0.055 + u * r * -0.112,
+                        center + f * r * -0.025 + s * r * 0.018 + u * r * -0.174,
+                        12);
+
+                    AddCubic(
+                        lines,
+                        center + f * r * -0.025 + s * r * 0.018 + u * r * -0.174,
+                        center + f * r * -0.122 + s * r * 0.030 + u * r * -0.052,
+                        center + f * r * -0.112 + s * r * 0.038 + u * r * 0.098,
+                        center + f * r * -0.052 + s * r * 0.020 + u * r * 0.165,
+                        10);
+
+                    AddEllipse(lines, center + f * r * 0.012 + s * r * 0.045 + u * r * -0.026, f, u, r * 0.042, r * 0.070, 12);
+
+                    AddCubic(
+                        lines,
+                        center + f * r * -0.034 + s * r * 0.055 + u * r * 0.112,
+                        center + f * r * 0.038 + s * r * 0.072 + u * r * 0.070,
+                        center + f * r * 0.045 + s * r * 0.072 + u * r * -0.018,
+                        center + f * r * -0.004 + s * r * 0.052 + u * r * -0.082,
+                        9);
+
+                    AddCubic(
+                        lines,
+                        center + f * r * -0.018 + s * r * 0.052 + u * r * 0.020,
+                        center + f * r * -0.074 + s * r * 0.040 + u * r * 0.002,
+                        center + f * r * -0.070 + s * r * 0.035 + u * r * -0.074,
+                        center + f * r * -0.008 + s * r * 0.048 + u * r * -0.122,
                         8);
 
-                    AddEllipse(lines, center + f * r * 0.012 + u * r * -0.010, f, u, r * 0.030, r * 0.060, 10);
+                    AddCubic(
+                        lines,
+                        center + f * r * 0.025 + s * r * 0.050 + u * r * 0.048,
+                        center + f * r * 0.096 + s * r * 0.060 + u * r * 0.022,
+                        center + f * r * 0.084 + s * r * 0.052 + u * r * -0.088,
+                        center + f * r * 0.018 + s * r * 0.044 + u * r * -0.128,
+                        8);
 
                     AddCubic(
                         lines,
-                        center + f * r * -0.018 + u * r * 0.070,
-                        center + f * r * 0.018 + u * r * 0.045,
-                        center + f * r * 0.018 + u * r * -0.020,
-                        center + f * r * -0.012 + u * r * -0.060,
-                        7);
+                        center + f * r * 0.082 + s * r * 0.040 + u * r * 0.118,
+                        center + f * r * 0.118 + s * r * 0.016 + u * r * 0.050,
+                        center + f * r * 0.112 + s * r * 0.010 + u * r * -0.036,
+                        center + f * r * 0.074 + s * r * 0.036 + u * r * -0.100,
+                        8);
 
-                    AddCubic(
-                        lines,
-                        center + f * r * -0.010 + u * r * 0.015,
-                        center + f * r * -0.050 + u * r * 0.005,
-                        center + f * r * -0.050 + u * r * -0.060,
-                        center + f * r * -0.012 + u * r * -0.090,
-                        6);
+                    lines.Add(new Line(center - s * r * 0.020 + u * r * 0.110, center + s * r * 0.035 + u * r * 0.130));
+                    lines.Add(new Line(center - s * r * 0.020 + u * r * -0.110, center + s * r * 0.030 + u * r * -0.132));
                 }
 
                 private static void AddCubic(List<Line> lines, Point3d p0, Point3d p1, Point3d p2, Point3d p3, int segments)
