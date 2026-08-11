@@ -473,6 +473,11 @@ namespace Pachyderm_Acoustic.UI
                 throw new InvalidOperationException(hrtf.ValidationMessage);
             }
 
+            if (!string.IsNullOrWhiteSpace(hrtf.ValidationMessage))
+            {
+                Rhino.RhinoApp.WriteLine(hrtf.ValidationMessage);
+            }
+
             return hrtf;
         }
 

@@ -2527,6 +2527,9 @@ namespace Pachyderm_Acoustic
                     case "Interaural Cross-Correlation (Early)":
                         {
                             double[][][] BinauralIRsPerBand = GenAllOctBandBinauralIRs(SampleRate);
+                            if (BinauralIRsPerBand == null)
+                                throw new InvalidOperationException("Could not generate binaural impulse responses for IACC.");
+
                             int refLen = BinauralIRsPerBand[0][0].Length;
                             double irDur = refLen / (double)SampleRate;
 
@@ -2546,6 +2549,13 @@ namespace Pachyderm_Acoustic
                             }
 
                             const double EarlyWinEnd = 0.08; // 80 ms
+                            if (dtime < 0 || dtime >= EarlyWinEnd)
+                            {
+                                string errorMsg = $"Error: direct sound time ({dtime:F3} s) is outside the early IACC window ending at {EarlyWinEnd:F3} s.";
+                                Console.WriteLine(errorMsg);
+                                throw new InvalidOperationException(errorMsg);
+                            }
+
                             if (EarlyWinEnd > irDur)
                             {
                                 string errorMsg = $"Error: Analysis window (0-{EarlyWinEnd} s) exceeds IR duration ({irDur:F3} s).";
@@ -2582,6 +2592,9 @@ namespace Pachyderm_Acoustic
                     case "Interaural Cross-Correlation (Late)":
                         {
                             double[][][] BinauralIRsPerBand = GenAllOctBandBinauralIRs(SampleRate);
+                            if (BinauralIRsPerBand == null)
+                                throw new InvalidOperationException("Could not generate binaural impulse responses for IACC.");
+
                             int refLen = BinauralIRsPerBand[0][0].Length;
                             double irDur = refLen / (double)SampleRate;
 
@@ -3437,8 +3450,8 @@ namespace Pachyderm_Acoustic
                         Response[0] = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true));
                         break;
                     case "Binaural (select file...)":
-                        Response = new double[2][];
-                        if (hrtf == null) break;
+                        if (hrtf == null)
+                            throw new InvalidOperationException("No HRTF SOFA file has been selected for binaural rendering.");
                         Response = IR_Construction.Aurfilter_HRTF(Direct_Data, IS_Data, Receiver, hrtf, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), _sysCompSettingsPrimitives, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, false);
                         break;
                     case "First Order Ambisonics (ACN+SN3D)":
@@ -4007,7 +4020,8 @@ namespace Pachyderm_Acoustic
 
             public double[][][] GenAllOctBandBinauralIRs(int sampleFrequency)
             {
-                var hrtf = GetOrLoadHrtf(this);
+                bool usingDefaultHrtf = this.hrtf == null;
+                var hrtf = usingDefaultHrtf ? GetOrLoadHrtf(this) : this.hrtf;
 
                 double[][] Broadband;
                 try
@@ -4021,13 +4035,13 @@ namespace Pachyderm_Acoustic
                         sampleFrequency,
                         Receiver_Choice.SelectedIndex,
                         SelectedSources(),
-                        _sysCompSettingsPrimitives,
+                        _sysCompSettingsPrimitives ?? new Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings(),
                         false,
                         (double)Alt_Choice.Value,
                         (double)Azi_Choice.Value,
                         true,
                         true,
-                        true);
+                        usingDefaultHrtf);
                 }
                 catch (Exception ex)
                 {
@@ -4075,6 +4089,11 @@ namespace Pachyderm_Acoustic
                 {
                     Rhino.RhinoApp.WriteLine($"{hrtf.ValidationMessage}");
                     return null;
+                }
+
+                if (!string.IsNullOrWhiteSpace(hrtf.ValidationMessage))
+                {
+                    Rhino.RhinoApp.WriteLine(hrtf.ValidationMessage);
                 }
 
                 Rhino.RhinoApp.WriteLine($"Using HRTF file at: {GetWave.FileName}");
@@ -4323,20 +4342,35 @@ namespace Pachyderm_Acoustic
                 int SamplesPerSec;
                 double[] SignalBuffer;
                 OpenWaveFile(out SamplesPerSec, out SignalBuffer);
+                if (SignalBuffer == null || SignalBuffer.Length == 0)
+                {
+                    Rhino.RhinoApp.WriteLine("No input signal found to render...");
+                    return;
+                }
 
                 float maxvalue = 0;
                 //Normalize input signal...
                 for (int j = 0; j < SignalBuffer.Length; j++) maxvalue = (float)Math.Max(maxvalue, Math.Abs(SignalBuffer[j]));
+                if (maxvalue <= 0)
+                {
+                    Rhino.RhinoApp.WriteLine("Input signal is silent; no auralization was written.");
+                    return;
+                }
                 for (int j = 0; j < SignalBuffer.Length; j++) SignalBuffer[j] /= maxvalue;
                 //Convert pressure response to a 24-bit dynamic range:
 
                 double[][] Render_Response = RenderFilter(SamplesPerSec);
+                if (Render_Response == null || Render_Response.Length == 0 || Render_Response.Any(ch => ch == null))
+                {
+                    Rhino.RhinoApp.WriteLine("No valid impulse response found to render...");
+                    return;
+                }
 
                 float[][] NewSignal = new float[(int)Render_Response.Length][];
                 for (int i = 0; i < Render_Response.Length; i++)
                 {
                     NewSignal[i] = Pachyderm_Acoustic.Audio.Pach_SP.FFT_Convolution(SignalBuffer, Render_Response[i], 0);
-                    for (int j = 0; j < NewSignal[i].Length; j++) NewSignal[i][j] *= (float)(Math.Pow(10, 94 / 20) / Math.Pow(10, ((double)Normalization_Choice.Value) / 20));
+                    for (int j = 0; j < NewSignal[i].Length; j++) NewSignal[i][j] *= (float)(Math.Pow(10, 94.0 / 20.0) / Math.Pow(10, ((double)Normalization_Choice.Value) / 20.0));
                 }
 
                 List<int> srcs = SourceList.SelectedSources();
@@ -4381,6 +4415,12 @@ namespace Pachyderm_Acoustic
 
             private void ExportFilter(object sender, EventArgs e)
             {
+                if (Response == null || Response.Length == 0)
+                {
+                    Rhino.RhinoApp.WriteLine("No impulse response found to export...");
+                    return;
+                }
+
                 Eto.Forms.SaveFileDialog SaveWave = new Eto.Forms.SaveFileDialog();
 
                 if (Response.Length < 4)
@@ -4417,14 +4457,20 @@ namespace Pachyderm_Acoustic
                 }
 
                 double[][] Render_Response = RenderFilter(SamplesPerSec);
+                if (Render_Response == null || Render_Response.Length == 0 || Render_Response.Any(ch => ch == null))
+                {
+                    Rhino.RhinoApp.WriteLine("No valid impulse response found to export...");
+                    return;
+                }
+
                 float[][] RR = new float[Render_Response.Length][];
                 int maxlength = 0;
                 for (int j = 0; j < Render_Response.Length; j++) maxlength = Math.Max(Render_Response[j].Length, maxlength);
 
-                float mod = (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, ((double)Normalization_Choice.Value + 15) / 20));
+                float mod = (float)(Math.Pow(10, 120.0 / 20.0) / Math.Pow(10, ((double)Normalization_Choice.Value + 15.0) / 20.0));
                 for (int c = 0; c < Render_Response.Length; c++) RR[c] = new float[maxlength];
 
-                for (int j = 0; j < Render_Response[0].Length; j++)
+                for (int j = 0; j < maxlength; j++)
                 {
                     for (int c = 0; c < Render_Response.Length; c++) RR[c][j] = (j > Render_Response[c].Length - 1) ? 0 : (float)Render_Response[c][j] * mod;
                 }
