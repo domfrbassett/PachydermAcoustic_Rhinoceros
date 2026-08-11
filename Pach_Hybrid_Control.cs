@@ -3441,16 +3441,27 @@ namespace Pachyderm_Acoustic
                         }
                     AuralisationConduit.Instance.add_Reflections(Lines);
                     pts.Clear();
-                    List<Vector3d> Dirs = new List<Vector3d>();
-                    for (int i = 0; i < this.Channel_View.Items.Count; i++)
+                    Hare.Geometry.Vector listenerDirection = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true);
+                    Point3d receiverPoint = Utilities.RCPachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]);
+                    bool binaural = DistributionType.SelectedValue.ToString() == "Binaural (select file...)";
+
+                    if (binaural)
                     {
-                        Hare.Geometry.Vector TempDir = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(((channel)Channel_View.Items[i]).V, 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true);//new Hare.Geometry.Vector(Speaker_Directions[i].X, Speaker_Directions[i].Y, Speaker_Directions[i].Z)
-                        TempDir.Normalize();
-                        pts.Add(Recs[Receiver_Choice.SelectedIndex] + (TempDir) * .343 * Math.Max(5, ((channel)Channel_View.Items[i]).delay));
-                        Dirs.Add(new Vector3d(-TempDir.dx, -TempDir.dy, -TempDir.dz));
+                        AuralisationConduit.Instance.set_binaural_head(receiverPoint, Utilities.RCPachTools.HPttoRPt(listenerDirection));
                     }
-                    AuralisationConduit.Instance.add_Speakers(pts, Dirs);
-                    AuralisationConduit.Instance.set_direction(Utilities.RCPachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), Utilities.RCPachTools.HPttoRPt(Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true)));
+                    else
+                    {
+                        List<Vector3d> Dirs = new List<Vector3d>();
+                        for (int i = 0; i < this.Channel_View.Items.Count; i++)
+                        {
+                            Hare.Geometry.Vector TempDir = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(((channel)Channel_View.Items[i]).V, 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true);//new Hare.Geometry.Vector(Speaker_Directions[i].X, Speaker_Directions[i].Y, Speaker_Directions[i].Z)
+                            TempDir.Normalize();
+                            pts.Add(Recs[Receiver_Choice.SelectedIndex] + (TempDir) * .343 * Math.Max(5, ((channel)Channel_View.Items[i]).delay));
+                            Dirs.Add(new Vector3d(-TempDir.dx, -TempDir.dy, -TempDir.dz));
+                        }
+                        AuralisationConduit.Instance.add_Speakers(pts, Dirs);
+                        AuralisationConduit.Instance.set_direction(receiverPoint, Utilities.RCPachTools.HPttoRPt(listenerDirection));
+                    }
                     Update_Rose(null, null);
                 }
                 if (Rhino.RhinoDoc.ActiveDoc.IsAvailable) Rhino.RhinoDoc.ActiveDoc.Views.ActiveView.Redraw();
